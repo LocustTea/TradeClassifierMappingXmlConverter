@@ -50,7 +50,7 @@ namespace TradeClassifierMappingXmlConverter
 
         private static List<TradeClassifierMapping> RemoveDuplicatedClassifiers(List<TradeClassifierMapping> tradeClassifierMappings, string sectorsDirectoryPath, string classifierTreePath)
         {
-            var result = new List<TradeClassifierMapping>();
+            var result = new Dictionary<string, TradeClassifierMapping>();
 
 
             var sectors = Sector.LoadSectors(sectorsDirectoryPath);
@@ -65,14 +65,14 @@ namespace TradeClassifierMappingXmlConverter
                 ApplyRemoveDuplicatedClassifiers(rootSector, sectors, sectorInstruments, tradeClassifierMappings, result);
             }
 
-            return result;
+            return result.Values.ToList();
         }
 
         private static HashSet<string> ApplyRemoveDuplicatedClassifiers(Sector sector,
             Dictionary<string, Sector> sectors,
             Dictionary<string, HashSet<string>> sectorInstruments,
             List<TradeClassifierMapping> tradeClassifierMappings,
-            List<TradeClassifierMapping> result)
+            Dictionary<string, TradeClassifierMapping> result)
         {
             var instruments = new HashSet<string>();
             if (sectorInstruments.TryGetValue(sector.Id, out var ins))
@@ -97,12 +97,13 @@ namespace TradeClassifierMappingXmlConverter
                                 m.Classifiers.Contains(parentClassifierId) && m.Classifiers.Contains(childClassifierId))
                             .ToList();
 
+
+                        Console.WriteLine($"Sector {parentClassifierId} aggregates sector {childClassifierId}");
                         foreach (var c in classifiersToUpdate)
                         {
                             c.Classifiers.Remove(parentClassifierId);
+                            result[c.InstrumentId] = c;
                         }
-
-                        result.AddRange(classifiersToUpdate);
 
                         //aggregation is work
 
